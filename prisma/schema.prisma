@@ -1,0 +1,124 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+enum Role {
+  SUPER_ADMIN
+  FACILITY_ADMIN
+  INVENTORY_MANAGER
+  COORDINATION_MANAGER
+}
+
+enum FacilityType {
+  HOSPITAL
+  BLOOD_BANK
+  PHARMACY
+  SUPPLIER
+}
+
+enum ResourceType {
+  BLOOD
+  DRUG
+  ICU_BED
+  VENTILATOR
+  OXYGEN_CYLINDER
+  OPERATING_THEATRE
+  OTHER_SUPPLY
+}
+
+enum BloodGroup {
+  A_POS
+  A_NEG
+  B_POS
+  B_NEG
+  AB_POS
+  AB_NEG
+  O_POS
+  O_NEG
+}
+
+model User {
+  id           String  @id @default(uuid())
+  email        String  @unique
+  passwordHash String  @map("password_hash")
+  role         Role
+  facilityId   String? @map("facility_id")
+  isFirstLogin Boolean @default(true) @map("is_first_login")
+
+  createdBy String? @map("created_by")
+  isActive  Boolean @default(true) @map("is_active")
+
+  createdAt DateTime  @default(now()) @map("created_at")
+  facility  Facility? @relation(fields: [facilityId], references: [id])
+
+  @@map("users")
+}
+
+model Facility {
+  id       String       @id @default(uuid())
+  name     String       @unique
+  location String
+  type     FacilityType
+  phone    String
+
+  createdAt DateTime @default(now())
+
+  users     User[]
+  inventory InventoryItem[]
+}
+
+model InventoryItem {
+  id String @id @default(uuid())
+
+  facilityId String
+  facility   Facility @relation(fields: [facilityId], references: [id])
+
+  resourceType ResourceType
+
+  name       String?
+  bloodGroup BloodGroup?
+
+  quantity  Int?
+  total     Int?
+  available Int?
+
+  price      Decimal?  @db.Decimal(10, 2)
+  expiryDate DateTime?
+
+  category    String?
+  unitMeasure String?
+
+  isMovable Boolean
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  audits InventoryAudit[]
+
+  @@index([facilityId])
+  @@index([resourceType])
+  @@index([expiryDate])
+}
+
+model InventoryAudit {
+  id String @id @default(uuid())
+
+  inventoryItemId String
+  inventoryItem   InventoryItem @relation(fields: [inventoryItemId], references: [id])
+
+  changedBy String
+
+  previousValue Json?
+  newValue      Json
+
+  createdAt DateTime @default(now())
+
+  @@index([inventoryItemId])
+  @@index([changedBy])
+}
