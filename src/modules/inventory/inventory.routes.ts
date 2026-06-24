@@ -22,6 +22,7 @@ import {
 } from "./inventory.validation.js";
 import { requireResourceAccess } from "../../middleware/resource.acces.js";
 
+
 const router = Router();
 
 router.get(
@@ -99,6 +100,18 @@ router.put(
   validate(supplySchema),
   requireResourceAccess("OTHER_SUPPLY"),
   InventoryController.updateSupplies
+);
+
+router.get(
+  "/network/inventory/resources",
+  authMiddleware,
+  InventoryController.getNetworkResources
+);
+
+router.get(
+  "/network/inventory/facilities",
+  authMiddleware,
+  InventoryController.getResourceFacilities
 );
 
 export default router;

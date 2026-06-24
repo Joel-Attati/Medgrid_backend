@@ -283,4 +283,69 @@ static async getNetworkResources() {
     },
   });
 }
+
+ static async getResourceFacilities(
+    resourceType: string,
+    bloodGroup?: string,
+    name?: string
+  ) {
+    const today = new Date();
+
+    const facilities = await prisma.inventoryItem.findMany({
+      where: {
+        resourceType: resourceType as any,
+
+        ...(bloodGroup && {
+          bloodGroup: bloodGroup as any,
+        }),
+
+        ...(name && {
+          name,
+        }),
+
+        OR: [
+          {
+            quantity: {
+              gt: 0,
+            },
+          },
+          {
+            available: {
+              gt: 0,
+            },
+          },
+        ],
+
+        AND: [
+          {
+            OR: [
+              {
+                expiryDate: null,
+              },
+              {
+                expiryDate: {
+                  gte: today,
+                },
+              },
+            ],
+          },
+        ],
+      },
+
+      include: {
+        facility: {
+          select: {
+            id: true,
+            name: true,
+            location: true,
+            type: true,
+            phone: true,
+          },
+        },
+      },
+    });
+
+    return facilities;
+  }
 }
+

@@ -172,4 +172,45 @@ export class InventoryController {
       });
     }
   }
+  
+  static async getResourceFacilities(
+    req: AuthRequest,
+    res: Response
+  ) {
+    try {
+      const resourceType =
+        req.query.resourceType?.toString();
+
+      const bloodGroup =
+        req.query.bloodGroup?.toString();
+
+      const name =
+        req.query.name?.toString();
+
+      if (!resourceType) {
+        return res.status(400).json({
+          message: "resourceType is required",
+        });
+      }
+
+      const facilities =
+        await InventoryService.getResourceFacilities(
+          resourceType,
+          bloodGroup,
+          name
+        );
+
+      return res.status(200).json({
+        facilities,
+      });
+    } catch (error) {
+      console.error(error);
+
+      return res.status(500).json({
+        message: "Server error",
+      });
+    }
+  }
 }
+
+
